@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="私密文件区 - 李海峰">
+  <meta name="robots" content="noindex, nofollow">
+  <title>私密文件 - 李海峰</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <span class="brand-icon">李</span>
+        李海峰
+      </a>
+      <button class="mobile-menu-btn" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html">首页</a></li>
+        <li><a href="about.html">关于我</a></li>
+        <li><a href="files.html">文件共享</a></li>
+        <li><a href="gallery.html">图片画廊</a></li>
+        <li><a href="ai-prompts.html">AI提示词</a></li>
+        <li><a href="contact.html">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <div class="container">
+
+      <!-- 密码验证界面 -->
+      <div id="authSection" class="auth-overlay">
+        <div class="auth-box">
+          <div class="lock-icon">🔒</div>
+          <h2>私密文件区</h2>
+          <p>此区域需要密码才能访问</p>
+          <div class="auth-input-group">
+            <input type="password" id="passwordInput" class="auth-input" placeholder="请输入访问密码" autocomplete="off">
+            <button id="authSubmit" class="btn btn-primary">验证</button>
+          </div>
+          <div id="authError" class="auth-error">密码错误，请重试</div>
+        </div>
+      </div>
+
+      <!-- 文件列表界面（验证后显示） -->
+      <div id="contentSection" style="display: none;">
+
+        <section style="padding: 20px 0 30px; text-align: center;">
+          <h1 style="font-size: 1.8rem; font-weight: 800;">🔒 私密文件</h1>
+          <p style="color: var(--text-secondary); margin-top: 8px;">已通过验证，可浏览和下载以下文件</p>
+          <button id="logoutBtn" class="btn btn-outline btn-sm" style="margin-top: 16px;">退出登录</button>
+        </section>
+
+        <section class="file-section">
+          <h2>私密文件列表</h2>
+          <div id="privateFilesList">
+            <div class="empty-state">
+              <div class="empty-icon">📁</div>
+              <h3>暂无私密文件</h3>
+              <p>将文件放入 private-files 目录并在此处配置即可显示</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 李海峰 | 大理大学第一附属医院</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // 私密文件列表配置 - 在此添加你的文件
+    var privateFiles = [
+      // 格式同公开文件
+      // { name: '私密文档.pdf', type: 'pdf', size: '500 KB', path: 'private-files/私密文档.pdf' }
+    ];
+
+    function renderPrivateFiles() {
+      var container = document.getElementById('privateFilesList');
+      if (!container) return;
+
+      if (privateFiles.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📁</div><h3>暂无私密文件</h3><p>在页面代码的 privateFiles 数组中配置文件即可</p></div>';
+        return;
+      }
+
+      var html = '<ul class="file-list">';
+      privateFiles.forEach(function(file) {
+        var iconClass = file.type || 'other';
+        var ext = file.type ? file.type.toUpperCase() : '?';
+        html += '<li class="file-item">';
+        html += '<div class="file-info">';
+        html += '<div class="file-icon ' + iconClass + '">' + ext + '</div>';
+        html += '<div>';
+        html += '<div class="file-name">' + file.name + '</div>';
+        html += '<div class="file-meta">' + (file.size || '') + '</div>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="file-actions">';
+        html += '<a href="' + file.path + '" class="btn btn-sm btn-primary" download>下载</a>';
+        html += '</div>';
+        html += '</li>';
+      });
+      html += '</ul>';
+      container.innerHTML = html;
+    }
+
+    // === 验证逻辑 ===
+    document.addEventListener('DOMContentLoaded', function() {
+
+      var authSection = document.getElementById('authSection');
+      var contentSection = document.getElementById('contentSection');
+      var passwordInput = document.getElementById('passwordInput');
+      var authSubmit = document.getElementById('authSubmit');
+      var authError = document.getElementById('authError');
+      var logoutBtn = document.getElementById('logoutBtn');
+
+      // 如果已登录，直接显示内容
+      if (isAuthenticated()) {
+        authSection.style.display = 'none';
+        contentSection.style.display = '';
+        renderPrivateFiles();
+      }
+
+      // 提交密码
+      function handleAuth() {
+        var password = passwordInput.value.trim();
+        if (!password) return;
+
+        verifyPassword(password).then(function(valid) {
+          if (valid) {
+            setAuthenticated();
+            authSection.style.display = 'none';
+            contentSection.style.display = '';
+            renderPrivateFiles();
+            authError.classList.remove('show');
+          } else {
+            authError.classList.add('show');
+            passwordInput.value = '';
+            passwordInput.focus();
+          }
+        });
+      }
+
+      if (authSubmit) {
+        authSubmit.addEventListener('click', handleAuth);
+      }
+
+      if (passwordInput) {
+        passwordInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') handleAuth();
+        });
+      }
+
+      // 退出登录
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+          clearAuth();
+          authSection.style.display = '';
+          contentSection.style.display = 'none';
+          passwordInput.value = '';
+          passwordInput.focus();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

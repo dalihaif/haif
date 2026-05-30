@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="图片画廊 - 李海峰的个人空间">
+  <title>图片画廊 - 李海峰</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <span class="brand-icon">李</span>
+        李海峰
+      </a>
+      <button class="mobile-menu-btn" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html">首页</a></li>
+        <li><a href="about.html">关于我</a></li>
+        <li><a href="files.html">文件共享</a></li>
+        <li><a href="gallery.html">图片画廊</a></li>
+        <li><a href="ai-prompts.html">AI提示词</a></li>
+        <li><a href="contact.html">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <div class="container">
+
+      <section class="hero animate-in" style="padding: 30px 0 40px;">
+        <h1>图片画廊</h1>
+        <p class="subtitle">浏览共享的图片集</p>
+      </section>
+
+      <!-- 分类过滤 -->
+      <div class="gallery-filters animate-in">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="work">工作</button>
+        <button class="filter-btn" data-filter="life">生活</button>
+        <button class="filter-btn" data-filter="other">其他</button>
+      </div>
+
+      <!-- 图片网格 -->
+      <div class="gallery-grid animate-in" id="galleryGrid">
+        <!-- 图片通过 JS 动态加载 -->
+
+        <div class="empty-state" style="grid-column: 1/-1;">
+          <div class="empty-icon">🖼️</div>
+          <h3>暂无图片</h3>
+          <p>在页面代码中配置图片即可展示</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 灯箱 -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" aria-label="关闭">&times;</button>
+    <button class="lightbox-nav lightbox-prev" aria-label="上一张">&#8249;</button>
+    <button class="lightbox-nav lightbox-next" aria-label="下一张">&#8250;</button>
+    <img class="lightbox-img" src="" alt="">
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 李海峰 | 大理大学第一附属医院</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/gallery.js"></script>
+  <script>
+    // 图片配置 - 在此添加你的图片
+    var galleryImages = [
+      // 格式：{ src: '图片路径', alt: '图片描述', category: 'work|life|other' }
+      // 示例：
+      // { src: 'assets/images/photo1.jpg', alt: '工作照', category: 'work' }
+    ];
+
+    // 渲染图片网格
+    function renderGallery() {
+      var grid = document.getElementById('galleryGrid');
+      if (!grid) return;
+
+      if (galleryImages.length === 0) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><div class="empty-icon">🖼️</div><h3>暂无图片</h3><p>在 galleryImages 数组中添加图片配置即可展示</p></div>';
+        return;
+      }
+
+      var html = '';
+      galleryImages.forEach(function(img) {
+        html += '<div class="gallery-item" data-category="' + (img.category || 'other') + '">';
+        html += '<img src="' + img.src + '" alt="' + (img.alt || '') + '" loading="lazy">';
+        html += '<div class="overlay"><span>🔍</span></div>';
+        html += '</div>';
+      });
+      grid.innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', renderGallery);
+  </script>
+</body>
+</html>

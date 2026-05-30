@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="文件共享 - 李海峰的个人空间">
+  <title>文件共享 - 李海峰</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <span class="brand-icon">李</span>
+        李海峰
+      </a>
+      <button class="mobile-menu-btn" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html">首页</a></li>
+        <li><a href="about.html">关于我</a></li>
+        <li><a href="files.html">文件共享</a></li>
+        <li><a href="gallery.html">图片画廊</a></li>
+        <li><a href="ai-prompts.html">AI提示词</a></li>
+        <li><a href="contact.html">联系我</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <div class="container">
+
+      <section class="hero animate-in" style="padding: 30px 0 40px;">
+        <h1>文件共享</h1>
+        <p class="subtitle">浏览和下载共享文件</p>
+      </section>
+
+      <!-- 公开文件区 -->
+      <section class="file-section animate-in">
+        <h2>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          公开文件
+        </h2>
+
+        <div id="publicFilesList">
+          <!-- 文件通过 JS 动态加载 -->
+          <div class="empty-state">
+            <div class="empty-icon">📂</div>
+            <h3>暂无公开文件</h3>
+            <p>将文件放入 public-files 目录即可在此显示</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 私密文件入口 -->
+      <section class="private-entry animate-in">
+        <div class="lock-icon">🔒</div>
+        <h3>私密文件区</h3>
+        <p>此区域需要密码才能访问，包含个人或敏感文件</p>
+        <a href="private.html" class="btn btn-outline">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          输入密码访问
+        </a>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 李海峰 | 大理大学第一附属医院</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // 公开文件列表配置 - 在此添加你的文件
+    var publicFiles = [
+      // 格式：{ name: '文件名', type: 'pdf|doc|img|zip|other', size: '文件大小', path: '文件路径' }
+      // 示例：
+      // { name: '示例文档.pdf', type: 'pdf', size: '1.2 MB', path: 'public-files/示例文档.pdf' }
+    ];
+
+    // 渲染公开文件列表
+    function renderPublicFiles() {
+      var container = document.getElementById('publicFilesList');
+      if (!container) return;
+
+      if (publicFiles.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><h3>暂无公开文件</h3><p>将文件放入 public-files 目录并在此处配置即可显示</p></div>';
+        return;
+      }
+
+      var html = '<ul class="file-list">';
+      publicFiles.forEach(function(file) {
+        var iconClass = file.type || 'other';
+        var ext = file.type.toUpperCase();
+        if (ext === 'PDF') ext = 'PDF';
+        else if (ext === 'DOC') ext = 'DOC';
+        else if (ext === 'IMG') ext = 'IMG';
+        else if (ext === 'ZIP') ext = 'ZIP';
+
+        html += '<li class="file-item">';
+        html += '<div class="file-info">';
+        html += '<div class="file-icon ' + iconClass + '">' + ext + '</div>';
+        html += '<div>';
+        html += '<div class="file-name">' + file.name + '</div>';
+        html += '<div class="file-meta">' + (file.size || '') + '</div>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="file-actions">';
+        html += '<a href="' + file.path + '" class="btn btn-sm btn-primary" download>下载</a>';
+        html += '</div>';
+        html += '</li>';
+      });
+      html += '</ul>';
+      container.innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', renderPublicFiles);
+  </script>
+</body>
+</html>

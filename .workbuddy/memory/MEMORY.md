@@ -1,0 +1,33 @@
+# 个人网站项目记忆
+
+## 项目概述
+李海峰的个人网站，部署在 GitHub Pages，纯静态站。
+
+## 用户信息
+- 姓名：李海峰
+- 单位：大理大学第一附属医院
+- 电话：13988531240
+- 邮箱：dalihaif@qq.com
+
+## 技术约定
+- 纯前端静态站（HTML5 + CSS3 + 原生JS）
+- 零外部依赖（无 npm、无 CDN 库）
+- 设计风格：蓝白专业风，医疗/学术感
+- 响应式：CSS 断点 768px / 480px
+- 密码保护：客户端 SHA-256（默认密码 123456）
+
+## 已实现功能
+- 首页（个人信息展示）
+- 关于我（工作经历/教育/技能）
+- 文件共享（公开+私密双区）
+- 图片画廊（分类过滤+灯箱）
+- AI提示词（办公AI提示词合集）
+- 联系页面（mailto表单）
+
+## 文件配置点
+用户需手动配置：
+1. 头像 → index.html hero-avatar 区域
+2. 公开文件 → files.html publicFiles 数组
+3. 私密文件 → private.html privateFiles 数组
+4. 图片 → gallery.html galleryImages 数组
+5. 密码 → js/auth.js PASSWORD_HASH
