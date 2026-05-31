@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>李氏家族谱牒 - 族谱追溯登记系统</title>
+  <style>
+    /* ==================== 现代全局样式定义 ==================== */
+    :root {
+      --primary: #8d6e63;
+      --primary-light: #efebe9;
+      --primary-dark: #5d4037;
+      --success: #4caf50;
+      --danger: #ff4d4f;
+      --warning: #ffb74d;
+      --text-main: #262626;
+      --text-secondary: #595959;
+      --text-light: #8c8c8c;
+      --bg-main: #f7f5f4;
+      --bg-card: #ffffff;
+      --border: #e8e8e8;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-main); color: var(--text-main); line-height: 1.6; }
+    
+    /* 导航栏 */
+    .navbar { display: flex; justify-content: space-between; align-items: center; background-color: var(--primary-dark); color: #fff; padding: 12px 24px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+    .navbar-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; font-size: 18px; font-weight: bold; }
+    .brand-icon { background: #fff; color: var(--primary-dark); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; }
+    .navbar-nav { display: flex; align-items: center; list-style: none; gap: 4px; }
+    .navbar-nav a { color: rgba(255,255,255,0.85); text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 14px; transition: all 0.2s; }
+    .navbar-nav a:hover, .navbar-nav a.active { color: #fff; background-color: rgba(255,255,255,0.15); }
+
+    /* 主布局容器 */
+    .main-content { max-width: 1200px; margin: 24px auto; padding: 0 16px; min-height: calc(100vh - 160px); }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 通用卡片组件 */
+    .card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .card-title { font-size: 16px; font-weight: bold; color: var(--primary-dark); display: flex; align-items: center; gap: 6px; }
+
+    /* 核心工具表单元素 */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 16px; font-size: 14px; border-radius: 4px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--primary-light); color: var(--primary-dark); }
+    .btn-secondary:hover { background: #e0d8d5; }
+    .btn-outline { background: transparent; border-color: var(--primary); color: var(--primary); }
+    .btn-outline:hover { background: var(--primary-light); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { opacity: 0.9; }
+    .btn-ghost { background: transparent; color: var(--text-secondary); }
+    .btn-ghost:hover { background: #eee; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; outline: none; transition: border 0.2s; }
+    .form-control:focus { border-color: var(--primary); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .form-hint { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+
+    /* 仪表盘统计格栅 */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .stat-card { background: #fff; border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .stat-icon.red { background: #fff0f6; }
+    .stat-icon.blue { background: #e6f7ff; }
+    .stat-icon.pink { background: #fff0f6; }
+    .stat-icon.green { background: #f6ffed; }
+    .stat-icon.purple { background: #f9f0ff; }
+    .stat-info { display: flex; flex-direction: column; }
+    .stat-value { font-size: 22px; font-weight: bold; color: #1f1f1f; line-height: 1.2; }
+    .stat-label { font-size: 12px; color: var(--text-light); }
+
+    /* 成员管理格栅及卡片 */
+    .toolbar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .search-input { position: relative; flex: 1; min-width: 240px; }
+    .search-input input { padding-left: 36px; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 14px; }
+    .filter-group { display: flex; background: #eee; padding: 3px; border-radius: 4px; gap: 2px; }
+    .filter-btn { border: none; background: transparent; padding: 4px 12px; font-size: 12px; border-radius: 3px; cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active { background: #fff; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .member-card-item { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; position: relative; }
+    .member-card-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .member-card-item.male { border-left: 4px solid #1890ff; }
+    .member-card-item.female { border-left: 4px solid #ff4d4f; }
+    .member-card-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #fff; }
+    .member-card-avatar.male { background: #1890ff; }
+    .member-card-avatar.female { background: #ff4d4f; }
+    .member-card-info { flex: 1; min-width: 0; }
+    .member-card-name { font-weight: bold; font-size: 15px; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+    .member-card-meta { font-size: 12px; color: var(--text-light); }
+    .badge-male { color: #1890ff; font-size: 12px; }
+    .badge-female { color: #ff4d4f; font-size: 12px; }
+
+    /* 首页最近加入 */
+    .recent-member-item { display: flex; flex-direction: column; align-items: center; padding: 12px; background: var(--bg-main); border-radius: 6px; text-align: center; cursor: pointer; transition: transform 0.2s; }
+    .recent-member-item:hover { transform: scale(1.03); }
+    .recent-avatar { width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 6px; font-size: 16px; }
+    .recent-avatar.male { background: #1890ff; }
+    .recent-avatar.female { background: #ff4d4f; }
+    .recent-name { font-size: 13px; font-weight: bold; }
+    .recent-gen { font-size: 11px; color: var(--text-light); }
+
+    /* 空状态 */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); width: 100%; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.7; }
+
+    /* 家族树展示容器 */
+    .tree-container { position: relative; width: 100%; height: 600px; background: #fafafa; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+    #treeCanvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    #treeCanvas:active { cursor: grabbing; }
+    .tree-legend { position: absolute; left: 16px; bottom: 16px; background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 4px; box-shadow: var(--shadow); font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 100px; height: 10px; border-radius: 2px; }
+    .legend-dot.male { background: #e3f2fd; border: 1px solid #1890ff; }
+    .legend-dot.female { background: #fff0f3; border: 1px solid #ff4d4f; }
+    .tree-controls { position: absolute; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+    .tree-ctrl-btn { width: 32px; height: 32px; background: #fff; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: var(--shadow); font-size: 16px; }
+    .tree-ctrl-btn:hover { background: #f0f0f0; }
+
+    /* 统计纯CSS图表组件 */
+    .chart-section { margin-bottom: 20px; }
+    .chart-title { font-size: 14px; font-weight: bold; margin-bottom: 12px; color: var(--text-secondary); }
+    .bar-chart { display: flex; flex-direction: column; gap: 12px; }
+    .chart-row { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+    .chart-label { width: 100px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
+    .chart-track { flex: 1; height: 16px; background: #eee; border-radius: 8px; overflow: hidden; }
+    .chart-fill { height: 100%; background: var(--primary); transition: width 0.6s ease; }
+    .chart-fill.male { background: #1890ff; }
+    .chart-fill.female { background: #ff4d4f; }
+    .chart-val { width: 80px; font-size: 12px; color: var(--text-light); }
+
+    /* 列表项渲染（家训、公告、日志） */
+    .motto-item, .notice-item { padding: 16px; border-bottom: 1px solid var(--border); position: relative; }
+    .motto-item:last-child, .notice-item:last-child { border-bottom: none; }
+    .motto-title, .notice-title { font-size: 15px; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .motto-meta, .notice-meta { font-size: 12px; color: var(--text-light); margin-bottom: 4px; }
+    .motto-content, .notice-content { font-size: 14px; color: var(--text-secondary); white-space: pre-wrap; }
+    .tag-pin { background: var(--danger); color: #fff; font-size: 10px; padding: 1px 4px; border-radius: 3px; }
+    .tag-type { background: #eee; color: #666; font-size: 11px; padding: 1px 6px; border-radius: 3px; }
+    .tag-type.important { background: #fff0f6; color: #ff4d4f; }
+    .tag-type.event { background: #e6f7ff; color: #1890ff; }
+    
+    .log-item { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #fafafa; display: flex; justify-content: space-between; }
+    .log-time { color: var(--text-light); }
+
+    /* 全局通用弹窗（Modal）组件样式 */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease; }
+    .modal { background: #fff; border-radius: var(--radius); width: 100%; max-width: 600px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 4px 16px rgba(0,0,0,0.15); animation: scaleUp 0.2s ease; }
+    @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 16px; font-weight: bold; color: var(--primary-dark); }
+    .modal-close { background: transparent; border: none; font-size: 16px; cursor: pointer; color: var(--text-light); }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #fafafa; }
+
+    /* 成员详情弹窗专属 */
+    .detail-header { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .detail-avatar { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; font-weight: bold; }
+    .detail-avatar.male { background: #1890ff; }
+    .detail-avatar.female { background: #ff4d4f; }
+    .detail-info h2 { font-size: 20px; margin-bottom: 4px; }
+    .detail-meta { display: flex; gap: 6px; }
+    .tag { font-size: 11px; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+    .tag-male { background: #e6f7ff; color: #1890ff; }
+    .tag-female { background: #fff0f5; color: #ff4d4f; }
+    .tag-primary { background: var(--primary-light); color: var(--primary-dark); }
+    .tag-gold { background: #fffbe6; color: #d46b08; border: 1px solid #ffe58f; }
+    .detail-section { margin-bottom: 16px; }
+    .detail-section h4 { font-size: 13px; color: var(--primary); margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 6px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; }
+    .detail-item { display: flex; }
+    .dl { width: 70px; color: var(--text-light); }
+    .dv { flex: 1; color: var(--text-main); font-weight: 500; }
+    .relation-list { display: flex; flex-direction: column; gap: 6px; }
+    .relation-item { font-size: 13px; background: #f9f9f9; padding: 6px 12px; border-radius: 4px; display: flex; justify-content: space-between; }
+    .relation-role { color: var(--text-secondary); }
+    .relation-name { color: var(--primary-dark); font-weight: bold; cursor: pointer; }
+    .relation-name:hover { text-decoration: underline; }
+
+    /* 页脚 */
+    .footer { text-align: center; padding: 24px; font-size: 12px; color: var(--text-light); border-top: 1px solid var(--border); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a class="navbar-brand" href="#" id="navBrand">
+      <div class="brand-icon">谱</div>
+      <span id="familyNameDisplay">家族谱牒</span>
+    </a>
+    <ul class="navbar-nav" id="navLinks">
+      <li><a href="#" data-page="dashboard" class="active">📊 首页</a></li>
+      <li><a href="#" data-page="members">👥 成员</a></li>
+      <li><a href="#" data-page="tree">🌳 家族树</a></li>
+      <li><a href="#" data-page="mottos">📜 家训</a></li>
+      <li><a href="#" data-page="notices">📢 公告</a></li>
+      <li><a href="#" data-page="logs">📋 日志</a></li>
+      <li><a href="#" data-page="stats">📈 统计</a></li>
+      <li><button class="btn btn-primary btn-sm" id="btnAddMemberTop" style="margin-left:8px;">➕ 添加成员</button></li>
+    </ul>
+  </nav>
+
+  <div class="main-content">
+
+    <div id="page-dashboard" class="page active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon red">👨‍👩‍👧‍👦</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">家族总人数</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">👨</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statMale">0</div>
+            <div class="stat-label">男性</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pink">👩</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statFemale">0</div>
+            <div class="stat-label">女性</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">❤️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statAlive">0</div>
+            <div class="stat-label">在世</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">🕯️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statDeceased">0</div>
+            <div class="stat-label">已故</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🆕 最近加入</div>
+          <button class="btn btn-primary" id="btnAddMember">➕ 添加成员</button>
+        </div>
+        <div class="member-grid" id="recentMembers">
+          <div class="empty-state">
+            <div class="empty-icon">📖</div>
+            <h4>族谱尚未记录</h4>
+            <p>您的家族族谱还是空白，点击上方按钮开始记录第一位成员</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚡ 快捷功能</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
+          <button class="btn btn-outline" onclick="App.navigateTo('tree')">🌳 家族树</button>
+          <button class="btn btn-outline" onclick="App.navigateTo('members')">👥 成员管理</button>
+          <button class="btn btn-outline" onclick="App.navigateTo('stats')">📈 统计分析</button>
+          <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+          <button class="btn btn-outline" onclick="App.refreshAll()">🔄 刷新数据</button>
+        </div>
+      </div>
+
+      <input type="file" id="importFile" accept=".json" style="display:none;">
+    </div>
+
+    <div id="page-members" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👥 成员管理</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" id="btnAddMember2" onclick="App.showMemberForm()">➕ 添加成员</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-input">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-control" id="searchInput" placeholder="搜索姓名、地址、简介...">
+          </div>
+        </div>
+        <div class="toolbar" id="memberFilters">
+          <div class="filter-group">
+            <button class="filter-btn active" data-group="gender" data-value="all">全部</button>
+            <button class="filter-btn" data-group="gender" data-value="male">👨 男</button>
+            <button class="filter-btn" data-group="gender" data-value="female">👩 女</button>
+          </div>
+          <div class="filter-group">
+            <button class="filter-btn active" data-group="alive" data-value="all">全部状态</button>
+            <button class="filter-btn" data-group="alive" data-value="alive">❤️ 在世</button>
+            <button class="filter-btn" data-group="alive" data-value="deceased">🕯️ 已故</button>
+          </div>
+        </div>
+
+        <div class="member-grid" id="memberList"></div>
+      </div>
+    </div>
+
+    <div id="page-tree" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🌳 家族关系树</div>
+          <div style="font-size:13px;color:var(--text-light);">🖱️ 拖拽平移 · 滚轮缩放 · 点击节点查看详情</div>
+        </div>
+        <div class="tree-container">
+          <canvas id="treeCanvas"></canvas>
+          <div class="tree-legend">
+            <div class="legend-item"><div class="legend-dot male"></div> 男性</div>
+            <div class="legend-item"><div class="legend-dot female"></div> 女性</div>
+          </div>
+          <div class="tree-controls">
+            <button class="tree-ctrl-btn" id="treeZoomIn" title="放大">＋</button>
+            <button class="tree-ctrl-btn" id="treeZoomOut" title="缩小">－</button>
+            <button class="tree-ctrl-btn" id="treeReset" title="适应屏幕">⊡</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-stats" class="page">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon red">👨‍👩‍👧‍👦</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statTotal2">0</div>
+            <div class="stat-label">家族总人数</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">👨</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statMale2">0</div>
+            <div class="stat-label">男性</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pink">👩</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statFemale2">0</div>
+            <div class="stat-label">女性</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">❤️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statAlive2">0</div>
+            <div class="stat-label">在世</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">🕯️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statDeceased2">0</div>
+            <div class="stat-label">已故</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card chart-section">
+        <div class="chart-title">📊 性别比例</div>
+        <div class="bar-chart" id="genderBar"></div>
+      </div>
+
+      <div class="card chart-section">
+        <div class="chart-title">📊 年龄分布（在世成员）</div>
+        <div class="bar-chart" id="ageBar"></div>
+      </div>
+
+      <div class="card chart-section">
+        <div class="chart-title">📊 世代分布</div>
+        <div class="bar-chart" id="genBar"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔧 数据管理</div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" id="btnExportJSON">📥 导出JSON</button>
+          <button class="btn btn-secondary" id="btnExportText">📄 导出文本族谱</button>
+          <button class="btn btn-outline" id="btnUploadExcel2" onclick="document.getElementById('importFile').click()">📤 导入JSON数据</button>
+          <button class="btn btn-danger btn-sm" id="btnResetData" style="margin-left:auto;">⚠️ 重置数据</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-mottos" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📜 家族家训</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" id="btnAddMotto">➕ 添加家训</button>
+          </div>
+        </div>
+        <div id="mottoList"></div>
+      </div>
+    </div>
+
+    <div id="page-notices" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📢 家族公告</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" id="btnAddNotice">➕ 发布公告</button>
+          </div>
+        </div>
+        <div id="noticeList"></div>
+      </div>
+    </div>
+
+    <div id="page-logs" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 操作日志</div>
+          <button class="btn btn-ghost btn-sm" id="btnClearLogs" style="color:var(--danger);">🗑️ 清空日志</button>
+        </div>
+        <div id="logList"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+   李氏家族谱牒  · 族谱追溯登记系统 · 数据存储于浏览器本地 · 建议定期导出备份
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">添加成员</div>
+        <button class="modal-close" id="btnCloseModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formMember">
+          <input type="hidden" id="formId">
+
+          <h4 style="font-size:14px;color:var(--primary);margin-bottom:12px;padding-left:8px;border-left:3px solid var(--primary);">基本信息</h4>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>姓名 *</label>
+              <input type="text" class="form-control" id="formName" placeholder="请输入姓名" required>
+            </div>
+            <div class="form-group">
+              <label>性别</label>
+              <select class="form-control" id="formGender">
+                <option value="male">男</option>
+                <option value="female">女</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>世代（代）</label>
+              <input type="number" class="form-control" id="formGeneration" placeholder="如：1" min="1" value="1">
+              <div class="form-hint">始祖为第1代</div>
+            </div>
+            <div class="form-group">
+              <label>排行</label>
+              <input type="text" class="form-control" id="formBirthOrder" placeholder="如：长子、次女">
+            </div>
+            <div class="form-group">
+              <label>民族</label>
+              <input type="text" class="form-control" id="formEthnicity" placeholder="如：白族" value="白族">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>出生日期</label>
+              <input type="date" class="form-control" id="formBirthDate">
+            </div>
+            <div class="form-group">
+              <label>逝世日期</label>
+              <input type="date" class="form-control" id="formDeathDate">
+              <div class="form-hint">如在世请留空</div>
+            </div>
+          </div>
+
+          <h4 style="font-size:14px;color:var(--primary);margin:20px 0 12px;padding-left:8px;border-left:3px solid var(--primary);">联系与工作</h4>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>学历</label>
+              <input type="text" class="form-control" id="formEducation" placeholder="如：本科">
+            </div>
+            <div class="form-group">
+              <label>职业</label>
+              <input type="text" class="form-control" id="formCareer" placeholder="如：医生">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>联系电话</label>
+              <input type="tel" class="form-control" id="formPhone" placeholder="如：13988531240">
+            </div>
+            <div class="form-group">
+              <label>地址</label>
+              <input type="text" class="form-control" id="formAddress" placeholder="如：大理大学第一附属医院">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>个人简介</label>
+            <textarea class="form-control" id="formBio" placeholder="简要描述生平、成就、事迹等" rows="3"></textarea>
+          </div>
+
+          <h4 style="font-size:14px;color:var(--primary);margin:20px 0 12px;padding-left:8px;border-left:3px solid var(--primary);">家族关系</h4>
+
+          <div class="form-group">
+            <label>父亲</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="fatherLabel" style="flex:1;"><span style="color:#8D6E63;font-size:13px;">未选择</span></div>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnSelectFather" onclick="App.openRelationPicker('father')">选择</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnClearFather" style="color:var(--danger);" onclick="App.clearRelation('father')">清除</button>
+            </div>
+            <div id="relationPicker_father" style="display:none;margin-top:8px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>母亲</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="motherLabel" style="flex:1;"><span style="color:#8D6E63;font-size:13px;">未选择</span></div>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnSelectMother" onclick="App.openRelationPicker('mother')">选择</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnClearMother" style="color:var(--danger);" onclick="App.clearRelation('mother')">清除</button>
+            </div>
+            <div id="relationPicker_mother" style="display:none;margin-top:8px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>配偶</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="spouseLabel" style="flex:1;"><span style="color:#8D6E63;font-size:13px;">未选择</span></div>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnSelectSpouse" onclick="App.openRelationPicker('spouse')">选择</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnClearSpouse" style="color:var(--danger);" onclick="App.clearRelation('spouse')">清除</button>
+            </div>
+            <div id="relationPicker_spouse" style="display:none;margin-top:8px;"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="btnCancelForm">取消</button>
+        <button type="submit" class="btn btn-primary" form="formMember">💾 保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="mottoModalOverlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="mottoModalTitle">添加家训</div>
+        <button class="modal-close" id="btnCloseMottoModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formMotto">
+          <input type="hidden" id="mottoFormId">
+          <div class="form-group">
+            <label>标题 *</label>
+            <input type="text" class="form-control" id="mottoTitle" placeholder="如：孝悌忠信" required>
+          </div>
+          <div class="form-group">
+            <label>内容 *</label>
+            <textarea class="form-control" id="mottoContent" rows="5" placeholder="请输入家训内容..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>作者/出处</label>
+            <input type="text" class="form-control" id="mottoAuthor" placeholder="如：祖训、李氏家规">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="btnCancelMotto">取消</button>
+        <button type="submit" class="btn btn-primary" form="formMotto">💾 保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="noticeModalOverlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="noticeModalTitle">发布公告</div>
+        <button class="modal-close" id="btnCloseNoticeModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formNotice">
+          <input type="hidden" id="noticeFormId">
+          <div class="form-group">
+            <label>标题 *</label>
+            <input type="text" class="form-control" id="noticeTitle" placeholder="请输入公告标题" required>
+          </div>
+          <div class="form-group">
+            <label>内容 *</label>
+            <textarea class="form-control" id="noticeContent" rows="5" placeholder="请输入公告内容..." required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>类型</label>
+              <select class="form-control" id="noticeType">
+                <option value="normal">普通</option>
+                <option value="important">重要</option>
+                <option value="event">活动</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>&nbsp;</label>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:24px;">
+                <input type="checkbox" id="noticePinned">
+                <label for="noticePinned" style="margin:0;font-weight:400;">置顶公告</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>发布人</label>
+            <input type="text" class="form-control" id="noticeAuthor" placeholder="如：族长、管理员">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="btnCancelNotice">取消</button>
+        <button type="submit" class="btn btn-primary" form="formNotice">💾 发布</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="detailModalOverlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">成员详情</div>
+        <button class="modal-close" id="btnCloseDetail">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-header">
+          <div class="detail-avatar male" id="detailAvatar">?</div>
+          <div class="detail-info">
+            <h2 id="detailName">—</h2>
+            <div class="detail-meta">
+              <span class="tag tag-male" id="detailGender">男</span>
+              <span class="tag tag-primary" id="detailGeneration">第1代</span>
+              <span class="tag tag-gold" id="detailAge">?岁</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>基本信息</h4>
+          <div class="detail-grid">
+            <div class="detail-item"><span class="dl">出生日期</span><span class="dv" id="detailBirthDate">—</span></div>
+            <div class="detail-item"><span class="dl">逝世日期</span><span class="dv" id="detailDeathDate">—</span></div>
+            <div class="detail-item"><span class="dl">排行</span><span class="dv" id="detailBirthOrder">—</span></div>
+            <div class="detail-item"><span class="dl">民族</span><span class="dv" id="detailEthnicity">—</span></div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>联系与工作</h4>
+          <div class="detail-grid">
+            <div class="detail-item"><span class="dl">学历</span><span class="dv" id="detailEducation">—</span></div>
+            <div class="detail-item"><span class="dl">职业</span><span class="dv" id="detailCareer">—</span></div>
+            <div class="detail-item"><span class="dl">电话</span><span class="dv" id="detailPhone">—</span></div>
+            <div class="detail-item"><span class="dl">地址</span><span class="dv" id="detailAddress">—</span></div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>个人简介</h4>
+          <p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap;" id="detailBio">—</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>家族关系</h4>
+          <div class="relation-list" id="detailRelations"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm" id="btnDeleteDetail" style="margin-right:auto;">🗑️ 删除</button>
+        <button class="btn btn-outline" id="btnEditDetail">✏️ 编辑</button>
+        <button class="btn btn-primary" id="btnCloseDetail2">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== 1. 核心应用状态管理驱动器 ====================
+    const App = {
+      // 全局状态树
+      state: {
+        members: [],
+        mottos: [],
+        notices: [],
+        logs: []
+      },
+      
+      // Canvas 缩放平移配置状态
+      treeTransform: { x: 0, y: 0, zoom: 1 },
+      treeLayoutNodes: {},
+
+      // 临时存储当前正在表单中选择的直系亲属ID
+      currentRelations: { fatherId: '', motherId: '', spouseId: '' },
+
+      init: function() {
+        this.loadLocalData();
+        this.bindGlobalEvents();
+        this.refreshAll();
+        this.initCanvasEngine();
+      },
+
+      // 数据持久化：从localStorage加载
+      loadLocalData: function() {
+        const local = localStorage.getItem('FAMILY_GENEALOGY_DATA');
+        if (local) {
+          try {
+            this.state = JSON.parse(local);
+          } catch(e) {
+            console.error("本地数据解析失败，已初始化空白数据库", e);
+          }
+        } else {
+          // 初始化默认体验种子数据
+          this.state = {
+            members: [],
+            mottos: [{id: '1', title: '崇德尚贤', content: '敦族睦宗，孝敬父母。积德行善，诗书传家。', author: '始祖遗训', timestamp: new Date().toLocaleString()}],
+            notices: [{id: '1', title: '系统成功部署启航', content: '欢迎使用现代家族谱牒追溯管理系统！数据完全归并保护于您本机的浏览器核心缓存中。为了数据安全，切记在录入多条信息后通过“统计分析”->“导出JSON”下载并存储在本地目录中。', type: 'important', pinned: true, author: '族长', timestamp: new Date().toLocaleString()}],
+            logs: [{text: '成功初始化本地谱牒系统架构。', timestamp: new Date().toLocaleString()}]
+          };
+          this.saveLocalData();
+        }
+      },
+
+      saveLocalData: function() {
+        localStorage.setItem('FAMILY_GENEALOGY_DATA', JSON.stringify(this.state));
+      },
+
+      addLog: function(text) {
+        this.state.logs.unshift({ text, timestamp: new Date().toLocaleString() });
+        this.saveLocalData();
+        this.renderLogs();
+      },
+
+      // 顶层通用视图路由导航
+      navigateTo: function(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('#navLinks a').forEach(a => a.classList.remove('active'));
+        
+        const targetPage = document.getElementById(`page-${pageId}`);
+        if(targetPage) targetPage.classList.add('active');
+        
+        const navItem = document.querySelector(`#navLinks a[data-page="${pageId}"]`);
+        if(navItem) navItem.classList.add('active');
+
+        if(pageId === 'tree') {
+          setTimeout(() => this.renderTreeCanvas(), 50);
+        }
+      },
+
+      // 级联刷新所有的上层UI视图
+      refreshAll: function() {
+        this.renderStats();
+        this.renderRecentMembers();
+        this.renderMemberList();
+        this.renderMottos();
+        this.renderNotices();
+        this.renderLogs();
+        this.renderCharts();
+      },
+
+      // ==================== 2. 全局交互事件捕获绑定 ====================
+      bindGlobalEvents: function() {
+        const self = this;
+
+        // 顶部与卡片级菜单路由监听切换
+        document.querySelectorAll('#navLinks a').forEach(link => {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+            if(page) self.navigateTo(page);
+          });
+        });
+
+        // 快速添加成员入口
+        const btnAddTop = document.getElementById('btnAddMemberTop');
+        if(btnAddTop) btnAddTop.onclick = () => self.showMemberForm();
+        const btnAddDash = document.getElementById('btnAddMember');
+        if(btnAddDash) btnAddDash.onclick = () => self.showMemberForm();
+
+        // 统一控制全局弹窗取消/关闭
+        document.getElementById('btnCancelForm').onclick = () => self.closeModal('modalOverlay');
+        document.getElementById('btnCloseModal').onclick = () => self.closeModal('modalOverlay');
+        document.getElementById('btnCancelMotto').onclick = () => self.closeModal('mottoModalOverlay');
+        document.getElementById('btnCloseMottoModal').onclick = () => self.closeModal('mottoModalOverlay');
+        document.getElementById('btnCancelNotice').onclick = () => self.closeModal('noticeModalOverlay');
+        document.getElementById('btnCloseNoticeModal').onclick = () => self.closeModal('noticeModalOverlay');
+        document.getElementById('btnCloseDetail').onclick = () => self.closeModal('detailModalOverlay');
+        document.getElementById('btnCloseDetail2').onclick = () => self.closeModal('detailModalOverlay');
+
+        // 表单保存事务拦截
+        document.getElementById('formMember').onsubmit = function(e) { e.preventDefault(); self.saveMemberForm(); };
+        document.getElementById('formMotto').onsubmit = function(e) { e.preventDefault(); self.saveMottoForm(); };
+        document.getElementById('formNotice').onsubmit = function(e) { e.preventDefault(); self.saveNoticeForm(); };
+
+        // 成员多维动态检索过滤器
+        document.getElementById('searchInput').oninput = () => self.renderMemberList();
+        document.querySelectorAll('#memberFilters .filter-btn').forEach(btn => {
+          btn.onclick = function() {
+            this.parentNode.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            self.renderMemberList();
+          }
+        });
+
+        // 外源 JSON 备份文件反向解析读取器
+        document.getElementById('importFile').onchange = function(e) {
+          const file = e.target.files[0];
+          if(!file) return;
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            try {
+              const importedData = JSON.parse(evt.target.content || evt.target.result);
+              if(importedData.members && importedData.mottos) {
+                self.state = importedData;
+                self.saveLocalData();
+                self.refreshAll();
+                self.addLog('成功导入外部全量JSON谱牒备份数据。');
+                alert('谱牒数据导入恢复成功！');
+              } else {
+                alert('数据结构非法，导入失败！');
+              }
+            } catch(err) {
+              alert('非合法的 JSON 文件！');
+            }
+          };
+          reader.readAsText(file);
+        };
+
+        // 数据备份维护中心模块响应
+        document.getElementById('btnExportJSON').onclick = () => self.exportToJSON();
+        document.getElementById('btnExportText').onclick = () => self.exportToTextTree();
+        document.getElementById('btnClearLogs').onclick = () => {
+          if(confirm('确认彻底清空日志流水记录？')) {
+            self.state.logs = [];
+            self.addLog('操作日志已手动执行全面格式化清空。');
+          }
+        };
+        document.getElementById('btnResetData').onclick = () => {
+          if(confirm('🚨 危险警告！此操作将彻底抹除当前浏览器存储的所有族谱数据，是否确定？')) {
+            localStorage.removeItem('FAMILY_GENEALOGY_DATA');
+            location.reload();
+          }
+        };
+
+        // 独立扩展添加功能实体按钮
+        document.getElementById('btnAddMotto').onclick = () => {
+          document.getElementById('formMotto').reset();
+          document.getElementById('mottoFormId').value = '';
+          document.getElementById('mottoModalTitle').textContent = '添加家族家训';
+          document.getElementById('mottoModalOverlay').style.display = 'flex';
+        };
+        document.getElementById('btnAddNotice').onclick = () => {
+          document.getElementById('formNotice').reset();
+          document.getElementById('noticeFormId').value = '';
+          document.getElementById('noticeModalTitle').textContent = '发布家族公告';
+          document.getElementById('noticeModalOverlay').style.display = 'flex';
+        };
+      },
+
+      closeModal: function(id) {
+        document.getElementById(id).style.display = 'none';
+      },
+
+      // ==================== 3. 统计计算与数据渲染渲染器 ====================
+      renderStats: function() {
+        const total = this.state.members.length;
+        const male = this.state.members.filter(m => m.gender === 'male').length;
+        const female = this.state.members.filter(m => m.gender === 'female').length;
+        const deceased = this.state.members.filter(m => m.deathDate && m.deathDate.trim() !== '').length;
+        const alive = total - deceased;
+
+        // 双向同步注入仪表盘及分析看板
+        ['statTotal', 'statTotal2'].forEach(id => document.getElementById(id).textContent = total);
+        ['statMale', 'statMale2'].forEach(id => document.getElementById(id).textContent = male);
+        ['statFemale', 'statFemale2'].forEach(id => document.getElementById(id).textContent = female);
+        ['statAlive', 'statAlive2'].forEach(id => document.getElementById(id).textContent = alive);
+        ['statDeceased', 'statDeceased2'].forEach(id => document.getElementById(id).textContent = deceased);
+      },
+
+      renderRecentMembers: function() {
+        const container = document.getElementById('recentMembers');
+        if(this.state.members.length === 0) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-icon">📖</div><h4>族谱尚未记录</h4><p>您的家族族谱还是空白，点击上方按钮开始记录第一位成员</p></div>`;
+          return;
+        }
+        
+        // 倒序截取最新录入的4名数组成员
+        const recents = [...this.state.members].slice(-4).reverse();
+        container.innerHTML = recents.map(m => `
+          <div class="recent-member-item" onclick="App.showMemberDetail('${m.id}')">
+            <div class="recent-avatar ${m.gender}">${m.name.charAt(0)}</div>
+            <div class="recent-name">${m.name}</div>
+            <div class="recent-gen">第 ${m.generation || 1} 代</div>
+          </div>
+        `).join('');
+      },
+
+      renderMemberList: function() {
+        const container = document.getElementById('memberList');
+        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        
+        let targetGender = 'all';
+        let targetAlive = 'all';
+        document.querySelectorAll('#memberFilters .filter-btn.active').forEach(b => {
+          const group = b.getAttribute('data-group');
+          if(group === 'gender') targetGender = b.getAttribute('data-value');
+          if(group === 'alive') targetAlive = b.getAttribute('data-value');
+        });
+
+        const filtered = this.state.members.filter(m => {
+          const matchQuery = m.name.toLowerCase().includes(query) || 
+                             (m.address && m.address.toLowerCase().includes(query)) || 
+                             (m.bio && m.bio.toLowerCase().includes(query));
+          const matchGender = (targetGender === 'all') || (m.gender === targetGender);
+          
+          const isDeceased = m.deathDate && m.deathDate.trim() !== '';
+          const matchAlive = (targetAlive === 'all') || 
+                             (targetAlive === 'alive' && !isDeceased) || 
+                             (targetAlive === 'deceased' && isDeceased);
+          
+          return matchQuery && matchGender && matchAlive;
+        });
+
+        if(filtered.length === 0) {
+          container.innerHTML = `<div class="empty-state">暂无符合检索过滤条件的家族成员。</div>`;
+          return;
+        }
+
+        container.innerHTML = filtered.map(m => `
+          <div class="member-card-item ${m.gender}" onclick="App.showMemberDetail('${m.id}')">
+            <div class="member-card-avatar ${m.gender}">${m.name.charAt(0)}</div>
+            <div class="member-card-info">
+              <div class="member-card-name">
+                ${m.name} 
+                <span class="badge-${m.gender}">${m.gender === 'male' ? '👨' : '👩'}</span>
+              </div>
+              <div class="member-card-meta">世代：第 ${m.generation || 1} 代</div>
+              <div class="member-card-meta">状态：${(m.deathDate && m.deathDate.trim()!=='') ? '🕯️ 已故' : '❤️ 在世'}</div>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      renderMottos: function() {
+        const container = document.getElementById('mottolist'); // 适配内层宿主
+        const target = container || document.getElementById('mottoList');
+        if(this.state.mottos.length === 0) {
+          target.innerHTML = `<div class="empty-state">暂无家族祖训纪录。</div>`;
+          return;
+        }
+        target.innerHTML = this.state.mottos.map(m => `
+          <div class="motto-item">
+            <div class="motto-title">📜 ${m.title}</div>
+            <div class="motto-meta">来源/作者：${m.author || '未知'} · 记录时间：${m.timestamp}</div>
+            <div class="motto-content">${m.content}</div>
+          </div>
+        `).join('');
+      },
+
+      renderNotices: function() {
+        const target = document.getElementById('noticeList');
+        if(this.state.notices.length === 0) {
+          target.innerHTML = `<div class="empty-state">当前没有任何宗族公告通知。</div>`;
+          return;
+        }
+        
+        // 按照置顶级别及时间降序混编
+        const sorted = [...this.state.notices].sort((a,b) => {
+          if(a.pinned && !b.pinned) return -1;
+          if(!a.pinned && b.pinned) return 1;
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+
+        target.innerHTML = sorted.map(n => `
+          <div class="notice-item">
+            <div class="notice-title">
+              📢 ${n.title}
+              ${n.pinned ? '<span class="tag-pin">置顶</span>' : ''}
+              <span class="tag-type ${n.type}">${n.type === 'important' ? '重要' : n.type==='event' ? '活动' : '普通'}</span>
+            </div>
+            <div class="notice-meta">发布人：${n.author || '系统'} · 发布时间：${n.timestamp}</div>
+            <div class="notice-content">${n.content}</div>
+          </div>
+        `).join('');
+      },
+
+      renderLogs: function() {
+        const target = document.getElementById('logList');
+        if(this.state.logs.length === 0) {
+          target.innerHTML = `<div class="empty-state">日志流水账单为空。</div>`;
+          return;
+        }
+        target.innerHTML = this.state.logs.map(l => `
+          <div class="log-item">
+            <span>🔹 ${l.text}</span>
+            <span class="log-time">${l.timestamp}</span>
+          </div>
+        `).join('');
+      },
+
+      renderCharts: function() {
+        const total = this.state.members.length || 1;
+        
+        // 1. 性别架构图表表征
+        const mCount = this.state.members.filter(m => m.gender === 'male').length;
+        const fCount = total - mCount;
+        const mPct = ((mCount / total) * 100).toFixed(1);
+        const fPct = (100 - mPct).toFixed(1);
+        
+        document.getElementById('genderBar').innerHTML = `
+          <div class="chart-row"><div class="chart-label">男性 (👨)</div><div class="chart-track"><div class="chart-fill male" style="width:${mPct}%"></div></div><div class="chart-val">${mCount}人 (${mPct}%)</div></div>
+          <div class="chart-row"><div class="chart-label">女性 (👩)</div><div class="chart-track"><div class="chart-fill female" style="width:${fPct}%"></div></div><div class="chart-val">${fCount}人 (${fPct}%)</div></div>
+        `;
+
+        // 2. 年龄断层格栅分布（动态计算，基准年份为 2026 年）
+        const baseYear = 2026;
+        const ageGroups = { '少年 (0-18)': 0, '青年 (19-40)': 0, '中年 (41-65)': 0, '老年 (66+)': 0 };
+        let aliveCount = 0;
+
+        this.state.members.forEach(m => {
+          const isDeceased = m.deathDate && m.deathDate.trim() !== '';
+          if (!isDeceased && m.birthDate) {
+            aliveCount++;
+            const birthYear = new Date(m.birthDate).getFullYear();
+            const age = baseYear - birthYear;
+            if(age <= 18) ageGroups['少年 (0-18)']++;
+            else if(age <= 40) ageGroups['青年 (19-40)']++;
+            else if(age <= 65) ageGroups['中年 (41-65)']++;
+            else ageGroups['老年 (66+)']++;
+          }
+        });
+
+        const denAge = aliveCount || 1;
+        document.getElementById('ageBar').innerHTML = Object.keys(ageGroups).map(g => {
+          const pct = ((ageGroups[g] / denAge) * 100).toFixed(1);
+          return `<div class="chart-row"><div class="chart-label">${g}</div><div class="chart-track"><div class="chart-fill" style="width:${pct}%"></div></div><div class="chart-val">${ageGroups[g]}人 (${pct}%)</div></div>`;
+        }).join('');
+
+        // 3. 世代柱状流图
+        const genMap = {};
+        this.state.members.forEach(m => {
+          const g = m.generation || 1;
+          genMap[`第 ${g} 代`] = (genMap[`第 ${g} 代`] || 0) + 1;
+        });
+
+        const genKeys = Object.keys(genMap).sort((a,b) => parseInt(a.replace(/[^0-9]/g, '')) - parseInt(b.replace(/[^0-9]/g, '')));
+        if(genKeys.length === 0) {
+          document.getElementById('genBar').innerHTML = `<div style="text-align:center;color:#aaa;font-size:12px;">暂无世代层级分布映射</div>`;
+        } else {
+          document.getElementById('genBar').innerHTML = genKeys.map(k => {
+            const pct = ((genMap[k] / total) * 100).toFixed(1);
+            return `<div class="chart-row"><div class="chart-label">${k}</div><div class="chart-track"><div class="chart-fill" style="width:${pct}%;background:#b0a295;"></div></div><div class="chart-val">${genMap[k]}人 (${pct}%)</div></div>`;
+          }).join('');
+        }
+      },
+
+      // ==================== 4. 成员关系事务流与CRUD控制中心 ====================
+      showMemberForm: function(id = null) {
+        const form = document.getElementById('formMember');
+        form.reset();
+        this.currentRelations = { fatherId: '', motherId: '', spouseId: '' };
+        
+        // 关闭所有的级联下拉临时选择面板
+        ['father', 'mother', 'spouse'].forEach(t => {
+          document.getElementById(`relationPicker_${t}`).style.display = 'none';
+          document.getElementById(`${t}Label`).innerHTML = `<span style="color:#8D6E63;font-size:13px;">未选择</span>`;
+        });
+
+        if(!id) {
+          document.getElementById('formId').value = '';
+          document.getElementById('modalTitle').textContent = '添加家族成员';
+        } else {
+          document.getElementById('formId').value = id;
+          document.getElementById('modalTitle').textContent = '编辑成员信息';
+          const m = this.state.members.find(x => x.id === id);
+          if(m) {
+            document.getElementById('formName').value = m.name || '';
+            document.getElementById('formGender').value = m.gender || 'male';
+            document.getElementById('formGeneration').value = m.generation || 1;
+            document.getElementById('formBirthOrder').value = m.birthOrder || '';
+            document.getElementById('formEthnicity').value = m.ethnicity || '汉族';
+            document.getElementById('formBirthDate').value = m.birthDate || '';
+            document.getElementById('formDeathDate').value = m.deathDate || '';
+            document.getElementById('formEducation').value = m.education || '';
+            document.getElementById('formCareer').value = m.career || '';
+            document.getElementById('formPhone').value = m.phone || '';
+            document.getElementById('formAddress').value = m.address || '';
+            document.getElementById('formBio').value = m.bio || '';
+            
+            // 回显直系血缘关系
+            this.currentRelations = { fatherId: m.fatherId || '', motherId: m.motherId || '', spouseId: m.spouseId || '' };
+            this.syncRelationLabel('father');
+            this.syncRelationLabel('mother');
+            this.syncRelationLabel('spouse');
+          }
+        }
+        document.getElementById('modalOverlay').style.display = 'flex';
+      },
+
+      openRelationPicker: function(type) {
+        const picker = document.getElementById(`relationPicker_${type}`);
+        const currentEditId = document.getElementById('formId').value;
+        
+        // 过滤关系候选集合：不能选自己、不能跨性别错乱配对（父亲限男、母亲限女）
+        const candidates = this.state.members.filter(m => {
+          if(m.id === currentEditId) return false;
+          if(type === 'father' && m.gender !== 'male') return false;
+          if(type === 'mother' && m.gender !== 'female') return false;
+          return true;
+        });
+
+        if(candidates.length === 0) {
+          picker.innerHTML = `<div style="font-size:12px;color:#aaa;padding:4px;">系统中暂无符合该角色限制条件的候选成员</div>`;
+          picker.style.display = 'block';
+          return;
+        }
+
+        let html = `<select class="form-control" onchange="App.selectRelationFromDropdown('${type}', this.value)">`;
+        html += `<option value="">-- 请选择关联人 --</option>`;
+        html += candidates.map(c => `<option value="${c.id}" ${this.currentRelations[type+'Id'] === c.id ? 'selected':''}>[第${c.generation || 1}代] - ${c.name}</option>`).join('');
+        html += `</select>`;
+        
+        picker.innerHTML = html;
+        picker.style.display = 'block';
+      },
+
+      selectRelationFromDropdown: function(type, val) {
+        this.currentRelations[type+'Id'] = val;
+        this.syncRelationLabel(type);
+        document.getElementById(`relationPicker_${type}`).style.display = 'none';
+      },
+
+      clearRelation: function(type) {
+        this.currentRelations[type+'Id'] = '';
+        this.syncRelationLabel(type);
+        document.getElementById(`relationPicker_${type}`).style.display = 'none';
+      },
+
+      syncRelationLabel: function(type) {
+        const id = this.currentRelations[type+'Id'];
+        const label = document.getElementById(`${type}Label`);
+        if(!id) {
+          label.innerHTML = `<span style="color:#8D6E63;font-size:13px;">未选择</span>`;
+        } else {
+          const match = this.state.members.find(x => x.id === id);
+          label.innerHTML = match ? `<span class="tag tag-primary">[第${match.generation || 1}代] ${match.name}</span>` : `<span style="color:#8D6E63;font-size:13px;">未选择</span>`;
+        }
+      },
+
+      saveMemberForm: function() {
+        const id = document.getElementById('formId').value;
+        const memberData = {
+          id: id || 'M_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+          name: document.getElementById('formName').value.trim(),
+          gender: document.getElementById('formGender').value,
+          generation: parseInt(document.getElementById('formGeneration').value) || 1,
+          birthOrder: document.getElementById('formBirthOrder').value.trim(),
+          ethnicity: document.getElementById('formEthnicity').value.trim(),
+          birthDate: document.getElementById('formBirthDate').value,
+          deathDate: document.getElementById('formDeathDate').value,
+          education: document.getElementById('formEducation').value.trim(),
+          career: document.getElementById('formCareer').value.trim(),
+          phone: document.getElementById('formPhone').value.trim(),
+          address: document.getElementById('formAddress').value.trim(),
+          bio: document.getElementById('formBio').value.trim(),
+          fatherId: this.currentRelations.fatherId,
+          motherId: this.currentRelations.motherId,
+          spouseId: this.currentRelations.spouseId
+        };
+
+        if(!id) {
+          this.state.members.push(memberData);
+          this.addLog(`成功录入并初创了家族新成员：【${memberData.name}】。`);
+        } else {
+          const idx = this.state.members.findIndex(x => x.id === id);
+          if(idx !== -1) {
+            this.state.members[idx] = memberData;
+            this.addLog(`系统对家族成员【${memberData.name}】的履历档案完成了更新。`);
+          }
+        }
+
+        this.saveLocalData();
+        this.closeModal('modalOverlay');
+        this.refreshAll();
+        // 如果在画布页，实时重绘
+        if(document.getElementById('page-tree').classList.contains('active')) {
+          this.renderTreeCanvas();
+        }
+      },
+
+      showMemberDetail: function(id) {
+        const m = this.state.members.find(x => x.id === id);
+        if(!m) return;
+
+        this.closeModal('modalOverlay'); // 防错交叉
+
+        document.getElementById('detailName').textContent = m.name;
+        document.getElementById('detailGender').textContent = m.gender === 'male' ? '男' : '女';
+        document.getElementById('detailGender').className = `tag tag-${m.gender}`;
+        document.getElementById('detailGeneration').textContent = `第 ${m.generation || 1} 代`;
+        
+        // 动态年龄审查算法（基准年份2026）
+        let ageDisplay = '?';
+        if(m.birthDate) {
+          const bYear = new Date(m.birthDate).getFullYear();
+          const dYear = (m.deathDate && m.deathDate.trim()!=='') ? new Date(m.deathDate).getFullYear() : 2026;
+          ageDisplay = dYear - bYear;
+        }
+        document.getElementById('detailAge').textContent = `${ageDisplay} 岁`;
+        
+        const avatar = document.getElementById('detailAvatar');
+        avatar.textContent = m.name.charAt(0);
+        avatar.className = `detail-avatar ${m.gender}`;
+
+        document.getElementById('detailBirthDate').textContent = m.birthDate || '—';
+        document.getElementById('detailDeathDate').textContent = m.deathDate || '—（健在）';
+        document.getElementById('detailBirthOrder').textContent = m.birthOrder || '—';
+        document.getElementById('detailEthnicity').textContent = m.ethnicity || '—';
+        document.getElementById('detailEducation').textContent = m.education || '—';
+        document.getElementById('detailCareer').textContent = m.career || '—';
+        document.getElementById('detailPhone').textContent = m.phone || '—';
+        document.getElementById('detailAddress').textContent = m.address || '—';
+        document.getElementById('detailBio').textContent = m.bio || '无生平轶事及功绩概述录入。';
+
+        // 谱系关系树网展示
+        const relList = document.getElementById('detailRelations');
+        relList.innerHTML = '';
+        
+        const roles = [{k:'fatherId', label:'父亲'}, {k:'motherId', label:'母亲'}, {k:'spouseId', label:'配偶'}];
+        roles.forEach(r => {
+          if(m[r.k]) {
+            const tgt = this.state.members.find(x => x.id === m[r.k]);
+            if(tgt) {
+              relList.innerHTML += `<div class="relation-item"><span class="relation-role">${r.label}</span><span class="relation-name" onclick="App.showMemberDetail('${tgt.id}')">${tgt.name} (第${tgt.generation}代)</span></div>`;
+            }
+          }
+        });
+
+        // 反向追溯衍生子女
+        const children = this.state.members.filter(c => c.fatherId === m.id || c.motherId === m.id);
+        children.forEach(c => {
+          relList.innerHTML += `<div class="relation-item"><span class="relation-role">子女</span><span class="relation-name" onclick="App.showMemberDetail('${c.id}')">${c.name} (第${c.generation}代)</span></div>`;
+        });
+
+        if(relList.innerHTML === '') relList.innerHTML = `<span style="color:#aaa; font-size:12px;">暂未构建关联直系血亲网络</span>`;
+
+        // 按钮授权闭环
+        document.getElementById('btnDeleteDetail').onclick = () => this.deleteMember(m.id);
+        document.getElementById('btnEditDetail').onclick = () => { this.closeModal('detailModalOverlay'); this.showMemberForm(m.id); };
+
+        document.getElementById('detailModalOverlay').style.display = 'flex';
+      },
+
+      deleteMember: function(id) {
+        const m = this.state.members.find(x => x.id === id);
+        if(!m) return;
+        if(confirm(`⚠️ 您确认要将数组成员【${m.name}】从家族谱牒中全面抹除吗？这可能会导致现有血脉连线中断！`)) {
+          // 清除其他成员中关于此人的关系锚定，防止出现悬挂指针错乱
+          this.state.members.forEach(x => {
+            if(x.fatherId === id) x.fatherId = '';
+            if(x.motherId === id) x.motherId = '';
+            if(x.spouseId === id) x.spouseId = '';
+          });
+          
+          this.state.members = this.state.members.filter(x => x.id !== id);
+          this.addLog(`从系统核心数据库中删除了成员：【${m.name}】及其级联亲属关系。`);
+          this.saveLocalData();
+          this.closeModal('detailModalOverlay');
+          this.refreshAll();
+          if(document.getElementById('page-tree').classList.contains('active')) this.renderTreeCanvas();
+        }
+      },
+
+      // 家训与公告辅助快捷表单保存
+      saveMottoForm: function() {
+        const motto = {
+          id: 'MOTTO_' + Date.now(),
+          title: document.getElementById('mottoTitle').value.trim(),
+          content: document.getElementById('mottoContent').value.trim(),
+          author: document.getElementById('mottoAuthor').value.trim() || '祖训',
+          timestamp: new Date().toLocaleString()
+        };
+        this.state.mottos.unshift(motto);
+        this.addLog(`成功收录了一条新的家族家训：【${motto.title}】。`);
+        this.saveLocalData();
+        this.closeModal('mottoModalOverlay');
+        this.renderMottos();
+      },
+
+      saveNoticeForm: function() {
+        const notice = {
+          id: 'NOTICE_' + Date.now(),
+          title: document.getElementById('noticeTitle').value.trim(),
+          content: document.getElementById('noticeContent').value.trim(),
+          type: document.getElementById('noticeType').value,
+          pinned: document.getElementById('noticePinned').checked,
+          author: document.getElementById('noticeAuthor').value.trim() || '管理员',
+          timestamp: new Date().toLocaleString()
+        };
+        this.state.notices.unshift(notice);
+        this.addLog(`向宗族内外发布了全新通告公告：【${notice.title}】。`);
+        this.saveLocalData();
+        this.closeModal('noticeModalOverlay');
+        this.renderNotices();
+      },
+
+      // ==================== 5. 轻量化同级目录本地数据导入导出内核 ====================
+      exportToJSON: function() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", `家族谱牒数据全量备份_${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        dlAnchor.remove();
+        this.addLog('执行了全量JSON备份文件的本地目录导出。');
+      },
+
+      exportToTextTree: function() {
+        if(this.state.members.length === 0) {
+          alert('数据为空，无法生成文本树！');
+          return;
+        }
+
+        let output = `========================================\n`;
+        output += `      李氏家族世系谱牒文本树归属存根\n`;
+        output += `      导存基准时间：${new Date().toLocaleString()}\n`;
+        output += `========================================\n\n`;
+
+        // 定位始祖节点（无父无母且代际最老或为第1代）
+        const roots = this.state.members.filter(m => !m.fatherId && !m.motherId);
+        const self = this;
+
+        function traverseText(memberId, indent = "") {
+          const m = self.state.members.find(x => x.id === memberId);
+          if(!m) return "";
+          
+          let line = `${indent}┣━ [第${m.generation}代] ${m.name} (${m.gender === 'male'?'男':'女'})`;
+          if(m.spouseId) {
+            const sp = self.state.members.find(x => x.id === m.spouseId);
+            if(sp) line += `  [配偶: ${sp.name}]`;
+          }
+          if(m.career) line += ` · 职业: ${m.career}`;
+          line += `\n`;
+
+          // 递归拉取子女
+          const children = self.state.members.filter(c => c.fatherId === m.id || c.motherId === m.id);
+          // 为了规避父母双全导致的子女被渲染两次，约束仅在父亲侧或母亲无配偶时递归
+          if(m.gender === 'male' || !m.spouseId) {
+            children.forEach(c => {
+              line += traverseText(c.id, indent + "    ");
+            });
+          }
+          return line;
+        }
+
+        if(roots.length === 0 && this.state.members.length > 0) {
+          // 兜底策略：如果复杂网状结构找不到绝对根，按世代分层倾倒
+          output += `(网络结构复杂，已按世代层级平面输出)\n`;
+          const sorted = [...this.state.members].sort((a,b)=>a.generation - b.generation);
+          sorted.forEach(m => {
+            output += `[第${m.generation}代] ${m.name} (${m.gender==='male'?'男':'女'})\n`;
+          });
+        } else {
+          roots.forEach(r => {
+            output += `【源流始祖脉络】\n`;
+            output += traverseText(r.id, "");
+            output += `\n`;
+          });
+        }
+
+        const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(output);
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", `文本家族线谱树_${new Date().toISOString().slice(0,10)}.txt`);
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        dlAnchor.remove();
+        this.addLog('成功将世系族谱转换并导出了纯文本可读结构。');
+      },
+
+      // ==================== 6. Canvas 高性能拓扑家族关系树引擎 ====================
+      initCanvasEngine: function() {
+        const canvas = document.getElementById('treeCanvas');
+        if(!canvas) return;
+        
+        let isDragging = false;
+        let startX, startY;
+        const self = this;
+
+        // 视口平移和缩放事件接管
+        canvas.addEventListener('mousedown', function(e) {
+          const rect = canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          // 反向物理坐标映射算法：探查是否点选击中了拓扑卡片节点
+          const ctx = canvas.getContext('2d');
+          const transformedX = (mouseX - canvas.width / 2 - self.treeTransform.x) / self.treeTransform.zoom;
+          const transformedY = (mouseY - 60 - self.treeTransform.y) / self.treeTransform.zoom;
+
+          let hitId = null;
+          for(let id in self.treeLayoutNodes) {
+            const n = self.treeLayoutNodes[id];
+            if(transformedX >= n.x && transformedX <= n.x + n.w && transformedY >= n.y && transformedY <= n.y + n.h) {
+              hitId = id;
+              break;
+            }
+          }
+
+          if(hitId) {
+            self.showMemberDetail(hitId);
+          } else {
+            isDragging = true;
+            startX = e.clientX - self.treeTransform.x;
+            startY = e.clientY - self.treeTransform.y;
+          }
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+          if(!isDragging) return;
+          self.treeTransform.x = e.clientX - startX;
+          self.treeTransform.y = e.clientY - startY;
+          self.renderTreeCanvas();
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        canvas.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          const zoomFactor = 1.1;
+          if(e.deltaY < 0) {
+            self.treeTransform.zoom = Math.min(3, self.treeTransform.zoom * zoomFactor);
+          } else {
+            self.treeTransform.zoom = Math.max(0.3, self.treeTransform.zoom / zoomFactor);
+          }
+          self.renderTreeCanvas();
+        });
+
+        // 控制器绑定
+        document.getElementById('treeZoomIn').onclick = () => { self.treeTransform.zoom = Math.min(3, self.treeTransform.zoom * 1.2); self.renderTreeCanvas(); };
+        document.getElementById('treeZoomOut').onclick = () => { self.treeTransform.zoom = Math.max(0.3, self.treeTransform.zoom / 1.2); self.renderTreeCanvas(); };
+        document.getElementById('treeReset').onclick = () => { self.treeTransform = { x: 0, y: 0, zoom: 1 }; self.renderTreeCanvas(); };
+      },
+
+      computeTreeLayout: function() {
+        const nodes = {};
+        const genGroups = {};
+        
+        // 分级划分世代存储区
+        this.state.members.forEach(m => {
+          const g = m.generation || 1;
+          if(!genGroups[g]) genGroups[g] = [];
+          genGroups[g].push(m);
+        });
+
+        const cardW = 120;
+        const cardH = 48;
+        const gapX = 50;
+        const gapY = 90;
+
+        const generations = Object.keys(genGroups).sort((a,b)=>parseInt(a)-parseInt(b));
+        
+        generations.forEach((gen, gIdx) => {
+          const list = genGroups[gen];
+          // 内部排序：尽可能让相同双亲的子嗣在横向轴聚集靠拢
+          list.sort((a,b) => String(a.fatherId || '').localeCompare(String(b.fatherId || '')));
+          
+          const layerTotalW = list.length * cardW + (list.length - 1) * gapX;
+          const startX = -layerTotalW / 2; // 以横向中心为零点轴对称展开
+          const currentY = gIdx * (cardH + gapY);
+
+          list.forEach((m, mIdx) => {
+            nodes[m.id] = {
+              id: m.id,
+              name: m.name,
+              gender: m.gender,
+              x: startX + mIdx * (cardW + gapX),
+              y: currentY,
+              w: cardW,
+              h: cardH,
+              raw: m
+            };
+          });
+        });
+
+        this.treeLayoutNodes = nodes;
+        return nodes;
+      },
+
+      renderTreeCanvas: function() {
+        const canvas = document.getElementById('treeCanvas');
+        if(!canvas || !document.getElementById('page-tree').classList.contains('active')) return;
+
+        // 视口高动态配平DPI
+        const rect = canvas.parentNode.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        // 核心：基于画布绝对物理中心执行空间变换
+        ctx.translate(canvas.width / 2 + this.treeTransform.x, 60 + this.treeTransform.y);
+        ctx.scale(this.treeTransform.zoom, this.treeTransform.zoom);
+
+        const nodes = this.computeTreeLayout();
+
+        // --- 第一阶段：血缘纽带连线绘制 ---
+        ctx.lineWidth = 1.5;
+        this.state.members.forEach(m => {
+          const current = nodes[m.id];
+          if(!current) return;
+
+          // 绘制父子/母子线（连线逻辑：从父母底端聚合拉出到孩子顶端）
+          if(m.fatherId && nodes[m.fatherId]) {
+            const fat = nodes[m.fatherId];
+            ctx.beginPath();
+            ctx.strokeStyle = '#90a4ae';
+            ctx.moveTo(fat.x + fat.w/2, fat.y + fat.h);
+            ctx.lineTo(current.x + current.w/2, current.y);
+            ctx.stroke();
+          }
+          if(m.motherId && nodes[m.motherId]) {
+            const mot = nodes[m.motherId];
+            ctx.beginPath();
+            ctx.strokeStyle = '#b0bec5';
+            ctx.moveTo(mot.x + mot.w/2, mot.y + mot.h);
+            ctx.lineTo(current.x + current.w/2, current.y);
+            ctx.stroke();
+          }
+
+          // 绘制配偶纽带关系线（侧连横线虚线桥）
+          if(m.spouseId && nodes[m.spouseId] && m.id < m.spouseId) {
+            const sp = nodes[m.spouseId];
+            ctx.beginPath();
+            ctx.strokeStyle = '#ffb74d';
+            ctx.setLineDash([4, 4]);
+            ctx.moveTo(current.x + current.w, current.y + current.h/2);
+            ctx.lineTo(sp.x, sp.y + sp.h/2);
+            ctx.stroke();
+            ctx.setLineDash([]); // 还原线型
+          }
+        });
+
+        // --- 第二阶段：实体卡片节点渲染 ---
+        for(let id in nodes) {
+          const n = nodes[id];
+          
+          // 根据性别着色卡片背景
+          ctx.fillStyle = n.gender === 'female' ? '#fff0f3' : '#e3f2fd';
+          ctx.strokeStyle = n.gender === 'female' ? '#ff4d4f' : '#1890ff';
+          
+          // 渲染微圆角矩形
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(n.x, n.y, n.w, n.h, 6);
+          } else {
+            ctx.rect(n.x, n.y, n.w, n.h); // 兼容古老内核
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          // 文字压印
+          ctx.fillStyle = '#262626';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(n.name, n.x + n.w/2, n.y + 18);
+
+          ctx.fillStyle = '#8c8c8c';
+          ctx.font = '10px sans-serif';
+          ctx.fillText(`第 ${n.raw.generation || 1} 代`, n.x + n.w/2, n.y + 36);
+        }
+
+        ctx.restore();
+      }
+    };
+
+    // ==================== 7. 独立离线化页面加载启动项 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      App.init();
+    });
+  </script>
+</body>
+</html>
