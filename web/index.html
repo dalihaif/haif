@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>家族谱牒 - 族谱追溯登记系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ==================== 顶部导航栏 ==================== -->
+  <nav class="navbar">
+    <a class="navbar-brand" href="#" onclick="App.navigateTo('dashboard');return false;">
+      <div class="brand-icon">谱</div>
+      <span id="familyNameDisplay">家族谱牒</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="#" data-page="dashboard" class="active">📊 首页</a></li>
+      <li><a href="#" data-page="members">👥 成员</a></li>
+      <li><a href="#" data-page="tree">🌳 家族树</a></li>
+      <li><a href="#" data-page="stats">📈 统计</a></li>
+      <li><button class="btn btn-primary btn-sm" id="btnAddMemberTop" style="margin-left:8px;">➕ 添加成员</button></li>
+    </ul>
+  </nav>
+
+  <!-- ==================== 主内容区 ==================== -->
+  <div class="main-content">
+
+    <!-- 页1：首页/仪表盘 -->
+    <div id="page-dashboard" class="page active">
+      <!-- 统计卡片 -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon red">👨‍👩‍👧‍👦</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">家族总人数</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">👨</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statMale">0</div>
+            <div class="stat-label">男性</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pink">👩</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statFemale">0</div>
+            <div class="stat-label">女性</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">❤️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statAlive">0</div>
+            <div class="stat-label">在世</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">🕯️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statDeceased">0</div>
+            <div class="stat-label">已故</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最近加入 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🆕 最近加入</div>
+          <button class="btn btn-primary" id="btnAddMember">➕ 添加成员</button>
+        </div>
+        <div class="member-grid" id="recentMembers">
+          <div class="empty-state">
+            <div class="empty-icon">📖</div>
+            <h4>族谱尚未记录</h4>
+            <p>您的家族族谱还是空白，点击上方按钮开始记录第一位成员</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷功能区 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚡ 快捷功能</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
+          <button class="btn btn-outline" onclick="App.navigateTo('tree')">🌳 家族树</button>
+          <button class="btn btn-outline" onclick="App.navigateTo('members')">👥 成员管理</button>
+          <button class="btn btn-outline" onclick="App.navigateTo('stats')">📈 统计分析</button>
+          <button class="btn btn-outline" onclick="document.getElementById('btnUploadExcel').click()">📥 导入数据</button>
+          <button class="btn btn-outline" onclick="App.refreshAll()">🔄 刷新数据</button>
+        </div>
+      </div>
+
+      <!-- 隐藏的文件导入 -->
+      <input type="file" id="importFile" accept=".json" style="display:none;">
+      <button id="btnUploadExcel" style="display:none;"></button>
+    </div>
+
+    <!-- 页2：成员管理 -->
+    <div id="page-members" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👥 成员管理</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" id="btnAddMember2" onclick="App.showMemberForm()">➕ 添加成员</button>
+          </div>
+        </div>
+
+        <!-- 搜索和筛选 -->
+        <div class="toolbar">
+          <div class="search-input">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-control" id="searchInput" placeholder="搜索姓名、地址、简介...">
+          </div>
+        </div>
+        <div class="toolbar" id="memberFilters">
+          <div class="filter-group">
+            <button class="filter-btn active" data-group="gender" data-value="all">全部</button>
+            <button class="filter-btn" data-group="gender" data-value="male">👨 男</button>
+            <button class="filter-btn" data-group="gender" data-value="female">👩 女</button>
+          </div>
+          <div class="filter-group">
+            <button class="filter-btn active" data-group="alive" data-value="all">全部状态</button>
+            <button class="filter-btn" data-group="alive" data-value="alive">❤️ 在世</button>
+            <button class="filter-btn" data-group="alive" data-value="deceased">🕯️ 已故</button>
+          </div>
+        </div>
+
+        <div class="member-grid" id="memberList"></div>
+      </div>
+    </div>
+
+    <!-- 页3：家族树 -->
+    <div id="page-tree" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🌳 家族关系树</div>
+          <div style="font-size:13px;color:var(--text-light);">🖱️ 拖拽平移 · 滚轮缩放 · 点击节点查看详情</div>
+        </div>
+        <div class="tree-container">
+          <canvas id="treeCanvas"></canvas>
+          <div class="tree-legend">
+            <div class="legend-item"><div class="legend-dot male"></div> 男性</div>
+            <div class="legend-item"><div class="legend-dot female"></div> 女性</div>
+          </div>
+          <div class="tree-controls">
+            <button class="tree-ctrl-btn" id="treeZoomIn" title="放大">＋</button>
+            <button class="tree-ctrl-btn" id="treeZoomOut" title="缩小">－</button>
+            <button class="tree-ctrl-btn" id="treeReset" title="适应屏幕">⊡</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 页4：统计分析 -->
+    <div id="page-stats" class="page">
+      <!-- 统计概览 -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon red">👨‍👩‍👧‍👦</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statTotal2">0</div>
+            <div class="stat-label">家族总人数</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">👨</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statMale2">0</div>
+            <div class="stat-label">男性</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pink">👩</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statFemale2">0</div>
+            <div class="stat-label">女性</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">❤️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statAlive2">0</div>
+            <div class="stat-label">在世</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">🕯️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statDeceased2">0</div>
+            <div class="stat-label">已故</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 性别比例 -->
+      <div class="card chart-section">
+        <div class="chart-title">📊 性别比例</div>
+        <div class="bar-chart" id="genderBar"></div>
+      </div>
+
+      <!-- 年龄分布 -->
+      <div class="card chart-section">
+        <div class="chart-title">📊 年龄分布（在世成员）</div>
+        <div class="bar-chart" id="ageBar"></div>
+      </div>
+
+      <!-- 世代分布 -->
+      <div class="card chart-section">
+        <div class="chart-title">📊 世代分布</div>
+        <div class="bar-chart" id="genBar"></div>
+      </div>
+
+      <!-- 数据操作 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔧 数据管理</div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" id="btnExportJSON">📥 导出JSON</button>
+          <button class="btn btn-secondary" id="btnExportText">📄 导出文本族谱</button>
+          <button class="btn btn-outline" id="btnUploadExcel2" onclick="document.getElementById('importFile').click()">📤 导入JSON数据</button>
+          <button class="btn btn-danger btn-sm" id="btnResetData" style="margin-left:auto;">⚠️ 重置数据</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== 页脚 ==================== -->
+  <div class="footer">
+    家族谱牒 v1.0 · 族谱追溯登记系统 · 数据存储于浏览器本地 · 建议定期导出备份
+  </div>
+
+  <!-- ==================== 添加/编辑成员弹窗 ==================== -->
+  <div class="modal-overlay" id="modalOverlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">添加成员</div>
+        <button class="modal-close" id="btnCloseModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formMember">
+          <input type="hidden" id="formId">
+
+          <!-- 头像 -->
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="position:relative;display:inline-block;cursor:pointer;" onclick="document.getElementById('avatarUpload').click()">
+              <div class="member-avatar male" id="avatarPreview" style="width:80px;height:80px;font-size:32px;">?</div>
+              <div style="position:absolute;bottom:0;right:0;background:var(--primary);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">📷</div>
+            </div>
+            <input type="file" id="avatarUpload" accept="image/*" style="display:none;">
+          </div>
+
+          <!-- 基本信息 -->
+          <h4 style="font-size:14px;color:var(--primary);margin-bottom:12px;padding-left:8px;border-left:3px solid var(--primary);">基本信息</h4>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>姓名 *</label>
+              <input type="text" class="form-control" id="formName" placeholder="请输入姓名" required>
+            </div>
+            <div class="form-group">
+              <label>性别</label>
+              <select class="form-control" id="formGender">
+                <option value="male">男</option>
+                <option value="female">女</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>世代（代）</label>
+              <input type="number" class="form-control" id="formGeneration" placeholder="如：1" min="1">
+              <div class="form-hint">始祖为第1代</div>
+            </div>
+            <div class="form-group">
+              <label>排行</label>
+              <input type="text" class="form-control" id="formBirthOrder" placeholder="如：长子、次女">
+            </div>
+            <div class="form-group">
+              <label>民族</label>
+              <input type="text" class="form-control" id="formEthnicity" placeholder="如：汉族" value="汉族">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>出生日期</label>
+              <input type="date" class="form-control" id="formBirthDate">
+            </div>
+            <div class="form-group">
+              <label>逝世日期</label>
+              <input type="date" class="form-control" id="formDeathDate">
+              <div class="form-hint">如在世请留空</div>
+            </div>
+          </div>
+
+          <!-- 联系与工作信息 -->
+          <h4 style="font-size:14px;color:var(--primary);margin:20px 0 12px;padding-left:8px;border-left:3px solid var(--primary);">联系与工作</h4>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>学历</label>
+              <input type="text" class="form-control" id="formEducation" placeholder="如：本科">
+            </div>
+            <div class="form-group">
+              <label>职业</label>
+              <input type="text" class="form-control" id="formCareer" placeholder="如：医生">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>联系电话</label>
+              <input type="tel" class="form-control" id="formPhone" placeholder="如：13988531240">
+            </div>
+            <div class="form-group">
+              <label>地址</label>
+              <input type="text" class="form-control" id="formAddress" placeholder="如：大理大学第一附属医院">
+            </div>
+          </div>
+
+          <!-- 个人简介 -->
+          <div class="form-group">
+            <label>个人简介</label>
+            <textarea class="form-control" id="formBio" placeholder="简要描述生平、成就、事迹等" rows="3"></textarea>
+          </div>
+
+          <!-- 家族关系 -->
+          <h4 style="font-size:14px;color:var(--primary);margin:20px 0 12px;padding-left:8px;border-left:3px solid var(--primary);">家族关系</h4>
+
+          <div class="form-group">
+            <label>父亲</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="fatherLabel" style="flex:1;"><span style="color:#8D6E63;font-size:13px;">未选择</span></div>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnSelectFather">选择</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnClearFather" style="color:var(--danger);">清除</button>
+            </div>
+            <div id="relationPicker_father" style="display:none;margin-top:8px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>母亲</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="motherLabel" style="flex:1;"><span style="color:#8D6E63;font-size:13px;">未选择</span></div>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnSelectMother">选择</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnClearMother" style="color:var(--danger);">清除</button>
+            </div>
+            <div id="relationPicker_mother" style="display:none;margin-top:8px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>配偶</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="spouseLabel" style="flex:1;"><span style="color:#8D6E63;font-size:13px;">未选择</span></div>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnSelectSpouse">选择</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnClearSpouse" style="color:var(--danger);">清除</button>
+            </div>
+            <div id="relationPicker_spouse" style="display:none;margin-top:8px;"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="btnCancelForm">取消</button>
+        <button type="submit" class="btn btn-primary" form="formMember">💾 保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 成员详情弹窗 ==================== -->
+  <div class="modal-overlay" id="detailModalOverlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">成员详情</div>
+        <button class="modal-close" id="btnCloseDetail">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-header">
+          <div class="detail-avatar male" id="detailAvatar">?</div>
+          <div class="detail-info">
+            <h2 id="detailName">—</h2>
+            <div class="detail-meta">
+              <span class="tag tag-male" id="detailGender">男</span>
+              <span class="tag tag-primary" id="detailGeneration">第1代</span>
+              <span class="tag tag-gold" id="detailAge">?岁</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>基本信息</h4>
+          <div class="detail-grid">
+            <div class="detail-item"><span class="dl">出生日期</span><span class="dv" id="detailBirthDate">—</span></div>
+            <div class="detail-item"><span class="dl">逝世日期</span><span class="dv" id="detailDeathDate">—</span></div>
+            <div class="detail-item"><span class="dl">排行</span><span class="dv" id="detailBirthOrder">—</span></div>
+            <div class="detail-item"><span class="dl">民族</span><span class="dv" id="detailEthnicity">—</span></div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>联系与工作</h4>
+          <div class="detail-grid">
+            <div class="detail-item"><span class="dl">学历</span><span class="dv" id="detailEducation">—</span></div>
+            <div class="detail-item"><span class="dl">职业</span><span class="dv" id="detailCareer">—</span></div>
+            <div class="detail-item"><span class="dl">电话</span><span class="dv" id="detailPhone">—</span></div>
+            <div class="detail-item"><span class="dl">地址</span><span class="dv" id="detailAddress">—</span></div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>个人简介</h4>
+          <p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap;" id="detailBio">—</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>家族关系</h4>
+          <div class="relation-list" id="detailRelations"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm" id="btnDeleteDetail" style="margin-right:auto;">🗑️ 删除</button>
+        <button class="btn btn-outline" id="btnEditDetail">✏️ 编辑</button>
+        <button class="btn btn-primary" id="btnCloseDetail2" onclick="App.closeDetailModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JavaScript ==================== -->
+  <script src="js/data.js"></script>
+  <script src="js/tree.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
