@@ -2,146 +2,34 @@
 <html lang="zh-CN">
 <head>
   <script>
-    /**
-     * 纯前端本地数据代理引擎
-     * 作用：无缝拦截所有数据请求，改由本地 data.json 与 LocalStorage 驱动，不破坏原网页任何功能。
-     */
-    (function() {
-      const STORAGE_KEY = 'family_tree_local_db_li';
-      const originalFetch = window.fetch;
+// DOM加载完成后自动执行
+document.addEventListener('DOMContentLoaded', async function(){
+    const jsonUrl = "data.json";
+    try {
+        // 自动拉取JSON文件
+        const res = await fetch(jsonUrl);
+        if(!res.ok) throw new Error("文件读取失败");
 
-      // 初始化：确保本地缓存有完整的数据结构
-      async function syncInitialData() {
-        if (!localStorage.getItem(STORAGE_KEY)) {
-          try {
-            // 自动读取同级目录下的 data.json
-            const response = await originalFetch('./data.json');
-            if (!response.ok) throw new Error('无法读取 data.json');
-            const data = await response.json();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            console.log('【数据中心】成功加载同级 data.json 并初始化本地缓存数据库！');
-          } catch (e) {
-            console.warn('【数据中心】未检测到同级 data.json 或存在跨域安全限制，已自动创建本地空白数据库。', e);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
-              members: [], mottos: [], notices: [], logs: []
-            }));
-          }
-        }
-      }
+        // 解析数据
+        const data = await res.json();
+        console.log("默认数据加载成功", data);
 
-      // 重写全局 fetch 请求拦截器
-      window.fetch = async function(url, options) {
-        const urlStr = String(url);
-        
-        // 匹配所有原本发往后端的 API 路由或针对 data.json 的请求
-        if (urlStr.includes('/api/') || urlStr.includes('data.json')) {
-          await syncInitialData();
-          let db = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-          const method = (options && options.method || 'GET').toUpperCase();
+        // 自定义页面渲染逻辑
+        const contentBox = document.getElementById("content");
+        contentBox.innerHTML = `
+            <h3>${data.family_name}</h3>
+            <p>${data.desc}</p>
+            <p>传承脉络：${data.main_line}</p>
+        `;
 
-          // 1. 处理数据读取 (GET)
-          if (method === 'GET') {
-            let resData = db;
-            if (urlStr.includes('member')) resData = db.members || [];
-            else if (urlStr.includes('motto')) resData = db.mottos || [];
-            else if (urlStr.includes('notice')) resData = db.notices || [];
-            else if (urlStr.includes('log')) resData = db.logs || [];
-            
-            return new Response(JSON.stringify(resData), {
-              status: 200, headers: { 'Content-Type': 'application/json' }
-            });
-          }
+    } catch (err) {
+        alert("加载默认数据失败：" + err.message);
+        console.error(err);
+    }
+});
+</script>
 
-          // 2. 处理数据写入与更改 (POST / PUT / DELETE)
-          if (['POST', 'PUT', 'DELETE'].includes(method)) {
-            let payload = {};
-            if (options && options.body) {
-              try {
-                if (typeof options.body === 'string') payload = JSON.parse(options.body);
-                else if (options.body instanceof FormData) payload = Object.fromEntries(options.body.entries());
-                else if (options.body instanceof URLSearchParams) payload = Object.fromEntries(options.body.entries());
-              } catch(e) {}
-            }
-
-            // 情况 A：全量数据导入或覆盖保存
-            if (payload.members || payload.mottos || payload.notices) {
-              db = { ...db, ...payload };
-            } 
-            // 情况 B：重置全部数据
-            else if (urlStr.includes('reset')) {
-              localStorage.removeItem(STORAGE_KEY);
-              await syncInitialData();
-              return new Response(JSON.stringify({ status: 'success', msg: '重置成功' }), { status: 200 });
-            }
-            // 情况 C：成员管理增删改
-            else if (urlStr.includes('member')) {
-              if (!db.members) db.members = [];
-              if (method === 'DELETE' || urlStr.includes('delete')) {
-                const id = payload.id || urlStr.split('/').pop();
-                db.members = db.members.filter(m => String(m.id) !== String(id));
-              } else {
-                const index = db.members.findIndex(m => String(m.id) === String(payload.id));
-                if (index > -1) db.members[index] = { ...db.members[index], ...payload };
-                else {
-                  if (!payload.id) payload.id = 'm_' + Date.now();
-                  db.members.push(payload);
-                }
-              }
-            }
-            // 情况 D：家训管理增删改
-            else if (urlStr.includes('motto')) {
-              if (!db.mottos) db.mottos = [];
-              if (method === 'DELETE' || urlStr.includes('delete')) {
-                const id = payload.id || urlStr.split('/').pop();
-                db.mottos = db.mottos.filter(m => String(m.id) !== String(id));
-              } else {
-                const index = db.mottos.findIndex(m => String(m.id) === String(payload.id));
-                if (index > -1) db.mottos[index] = { ...db.mottos[index], ...payload };
-                else {
-                  if (!payload.id) payload.id = 'mo_' + Date.now();
-                  db.mottos.push(payload);
-                }
-              }
-            }
-            // 情况 E：公告发布与删除
-            else if (urlStr.includes('notice')) {
-              if (!db.notices) db.notices = [];
-              if (method === 'DELETE' || urlStr.includes('delete')) {
-                const id = payload.id || urlStr.split('/').pop();
-                db.notices = db.notices.filter(m => String(m.id) !== String(id));
-              } else {
-                const index = db.notices.findIndex(m => String(m.id) === String(payload.id));
-                if (index > -1) db.notices[index] = { ...db.notices[index], ...payload };
-                else {
-                  if (!payload.id) payload.id = 'n_' + Date.now();
-                  db.notices.push(payload);
-                }
-              }
-            }
-            // 情况 F：操作日志管理
-            else if (urlStr.includes('log')) {
-              if (urlStr.includes('clear')) {
-                db.logs = [];
-              } else {
-                if (!db.logs) db.logs = [];
-                if (!payload.id) payload.id = 'l_' + Date.now();
-                db.logs.push(payload);
-              }
-            }
-
-            // 数据同步回本地缓存
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-            return new Response(JSON.stringify({ status: 'success', code: 200, msg: '本地缓存更新成功' }), {
-              status: 200, headers: { 'Content-Type': 'application/json' }
-            });
-          }
-        }
-
-        // 普通静态资源（如图片、图标等）保持默认请求逻辑
-        return originalFetch.apply(this, arguments);
-      };
-    })();
-  </script>
+<div id="content" style="padding: 20px;"></div>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>李氏家族谱牒 - 族谱追溯登记系统</title>
