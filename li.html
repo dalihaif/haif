@@ -732,7 +732,8 @@
         const local = localStorage.getItem('FAMILY_GENEALOGY_DATA');
         if (local) {
           try {
-            this.state = JSON.parse(local);
+            const parsed = JSON.parse(local);
+            this.state = this.normalizeState(parsed);
             console.log('[族谱] 已从 localStorage 恢复数据，成员数：' + this.state.members.length);
             return Promise.resolve();
           } catch(e) {
@@ -747,37 +748,61 @@
             return res.json();
           })
           .then(json => {
-            // family_tree.json 可能是完整 state 或仅 members 数组
-            if (Array.isArray(json)) {
-              // 仅成员数组格式
-              this.state = {
-                members: json,
-                mottos: [{id: '1', title: '崇德尚贤', content: '敦族睦宗，孝敬父母。积德行善，诗书传家。', author: '始祖遗训', timestamp: new Date().toLocaleString()}],
-                notices: [{id: '1', title: '族谱数据已自动加载', content: '已自动从 family_tree.json 加载族谱数据，共 ' + json.length + ' 名成员。如需备份请导出JSON。', type: 'important', pinned: true, author: '系统', timestamp: new Date().toLocaleString()}],
-                logs: [{text: '自动从 family_tree.json 加载了 ' + json.length + ' 名成员数据。', timestamp: new Date().toLocaleString()}]
-              };
-            } else if (json.members) {
-              // 完整 state 格式（包含 members/mottos/notices/logs）
-              this.state = json;
-              if (!this.state.logs) this.state.logs = [];
-              this.state.logs.unshift({text: '自动从 family_tree.json 加载了 ' + json.members.length + ' 名成员数据。', timestamp: new Date().toLocaleString()});
-            } else {
-              throw new Error('family_tree.json 格式无法识别');
-            }
+            this.state = this.normalizeState(json);
             this.saveLocalData();
             console.log('[族谱] 已从 family_tree.json 加载数据，成员数：' + this.state.members.length);
           })
           .catch(err => {
             console.warn('[族谱] family_tree.json 加载失败，初始化空白数据库。原因：' + err.message);
-            // 兜底：空白初始状态
-            this.state = {
-              members: [],
-              mottos: [{id: '1', title: '崇德尚贤', content: '敦族睦宗，孝敬父母。积德行善，诗书传家。', author: '始祖遗训', timestamp: new Date().toLocaleString()}],
-              notices: [{id: '1', title: '系统成功部署启航', content: '欢迎使用现代家族谱牒追溯管理系统！数据完全归并保护于您本机的浏览器核心缓存中。为了数据安全，切记在录入多条信息后通过"统计分析"->"导出JSON"下载并存储在本地目录中。', type: 'important', pinned: true, author: '族长', timestamp: new Date().toLocaleString()}],
-              logs: [{text: '成功初始化本地谱牒系统架构。', timestamp: new Date().toLocaleString()}]
-            };
+            this.state = this.getDefaultState();
             this.saveLocalData();
           });
+      },
+
+      // 字段名标准化：兼容 motto/mottos、notice/notices 等多种拼写
+      normalizeState: function(raw) {
+        const state = this.getDefaultState();
+        if (!raw) return state;
+
+        // members：支持数组或嵌套 {members: [...]}
+        if (Array.isArray(raw)) {
+          state.members = raw;
+        } else if (raw.members) {
+          state.members = Array.isArray(raw.members) ? raw.members : [];
+        }
+
+        // mottos：兼容 mottos / motto（单复数）
+        if (raw.mottos && Array.isArray(raw.mottos)) {
+          state.mottos = raw.mottos;
+        } else if (raw.motto && Array.isArray(raw.motto)) {
+          state.mottos = raw.motto;
+        } else if (raw.mottos) {
+          state.mottos = [];
+        }
+
+        // notices：兼容 notices / notice
+        if (raw.notices && Array.isArray(raw.notices)) {
+          state.notices = raw.notices;
+        } else if (raw.notice && Array.isArray(raw.notice)) {
+          state.notices = raw.notice;
+        }
+
+        // logs
+        if (raw.logs && Array.isArray(raw.logs)) {
+          state.logs = raw.logs;
+        }
+
+        return state;
+      },
+
+      // 默认初始状态
+      getDefaultState: function() {
+        return {
+          members: [],
+          mottos: [{id: '1', title: '崇德尚贤', content: '敦族睦宗，孝敬父母。积德行善，诗书传家。', author: '始祖遗训', timestamp: new Date().toLocaleString()}],
+          notices: [{id: '1', title: '系统成功部署启航', content: '欢迎使用现代家族谱牒追溯管理系统！数据完全归并保护于您本机的浏览器核心缓存中。为了数据安全，切记在录入多条信息后通过"统计分析"->"导出JSON"下载并存储在本地目录中。', type: 'important', pinned: true, author: '族长', timestamp: new Date().toLocaleString()}],
+          logs: [{text: '成功初始化本地谱牒系统架构。', timestamp: new Date().toLocaleString()}]
+        };
       },
 
       // 数据持久化：从localStorage加载（保留供外部调用兼容）
@@ -785,7 +810,7 @@
         const local = localStorage.getItem('FAMILY_GENEALOGY_DATA');
         if (local) {
           try {
-            this.state = JSON.parse(local);
+            this.state = this.normalizeState(JSON.parse(local));
           } catch(e) {
             console.error("本地数据解析失败，已初始化空白数据库", e);
           }
@@ -880,15 +905,16 @@
           const reader = new FileReader();
           reader.onload = function(evt) {
             try {
-              const importedData = JSON.parse(evt.target.content || evt.target.result);
-              if(importedData.members && importedData.mottos) {
-                self.state = importedData;
-                self.saveLocalData();
-                self.refreshAll();
-                self.addLog('成功导入外部全量JSON谱牒备份数据。');
+              const importedData = JSON.parse(evt.target.result);
+              const state = App.normalizeState(importedData);
+              if (state.members.length > 0 || state.mottos.length > 0) {
+                App.state = state;
+                App.saveLocalData();
+                App.refreshAll();
+                App.addLog('成功导入外部全量JSON谱牒备份数据。');
                 alert('谱牒数据导入恢复成功！');
               } else {
-                alert('数据结构非法，导入失败！');
+                alert('数据结构中未识别到有效内容，导入失败！');
               }
             } catch(err) {
               alert('非合法的 JSON 文件！');
